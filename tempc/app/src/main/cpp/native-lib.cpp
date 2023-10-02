@@ -5,7 +5,7 @@
 //function to be called in java
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_tempc_MainActivity_stringFromJNI(JNIEnv* env,jobject /* this */) {
-    std::string hello = "Hello from C++";
+    std::string hello = "Hello from pure C++ accessed by Java";
     return env->NewStringUTF(hello.c_str());
 }
 // use method from java
