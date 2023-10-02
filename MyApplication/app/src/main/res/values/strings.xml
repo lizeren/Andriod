@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="Spectre">Spectre-ARM!</string>
+    <string name="Running">Running</string>
+    <string name="Start">Start</string>
+</resources>
