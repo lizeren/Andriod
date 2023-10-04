@@ -23,10 +23,13 @@ project("tempc")
 # In order to load a library into your app from Java/Kotlin, you must call
 # System.loadLibrary() and pass the name of the library defined here;
 # for GameActivity/NativeActivity derived applications, the same library name must be
-# used in the AndroidManifest.xml file.
+# used in the AndroidManifest.xml file. ${CMAKE_ANDROID_ARCH_ABI}
+#include_directories(${CMAKE_SOURCE_DIR}/arm64-v8a/include ${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/armeabi-v7a/include ${CMAKE_SOURCE_DIR}/include)
+
 add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
-        native-lib.cpp)
+        native-lib.cpp helper.c)
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this
@@ -34,4 +37,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         android
-        log)
+        log
+        ${CMAKE_SOURCE_DIR}/armeabi-v7a/libflush.a)
+        #${CMAKE_SOURCE_DIR}/arm64-v8a/libflush.a)
