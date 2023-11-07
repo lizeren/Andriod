@@ -44,3 +44,13 @@ defaultConfig {
 
 ![Directory under cpp/](dir_tree.png)
 
+
+## Fix "Allow USB debugging" keeps on popping up
+
+
+If the "Allow USB debugging" message is shown again and again then this is usually a problem of the host, not of the Android device.
+You should reset the Android ADB authentication key by deleting it and then restarting ADB. A new authentication key (pair) will be generated which will hopefully work.
+To do so delete the files adbkey and adbkey.pub in the folder ~/.android/.
+Then execute adb kill-server and finally restart adb by executing adb start-server.
+Note that this will reset USB ADB authorization of all devices you had connected to that PC/user account.
+
