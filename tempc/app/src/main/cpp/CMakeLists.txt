@@ -26,6 +26,7 @@ project("tempc")
 # used in the AndroidManifest.xml file. ${CMAKE_ANDROID_ARCH_ABI}
 #include_directories(${CMAKE_SOURCE_DIR}/arm64-v8a/include ${CMAKE_SOURCE_DIR}/include)
 #include_directories(${CMAKE_SOURCE_DIR}/armeabi-v7a/include ${CMAKE_SOURCE_DIR}/include)
+add_definitions(-DTIME_SOURCE=TIME_SOURCE_PERF)   # <--------HERE THE NEW CMAKE LINE inside CMakeLists.txt
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
