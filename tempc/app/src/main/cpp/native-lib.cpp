@@ -13,18 +13,16 @@
 
 //function to be called in java
 
-
-
-uint64_t
-get_monotonic_time(void)
+//#define pmccntr
+#define cntvct_el0
+uint64_t get_monotonic_time(void)
 {
     struct timespec t1;
     clock_gettime(CLOCK_MONOTONIC, &t1);
     return t1.tv_sec * 1000*1000*1000ULL + t1.tv_nsec;
 }
 
-inline uint64_t
-perf_get_timing(libflush_session_t* session)
+inline uint64_t perf_get_timing(libflush_session_t* session)
 {
     long long result = 0;
 
@@ -56,24 +54,10 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
 
     // timer
 
-    arm_v8_timing_init();
-    int64_t result_pmccntr = arm_v8_get_timing();
-    asm volatile ("isb"); // Serialize after reading the counter
 
-    int64_t temp_disp1,temp_disp2,diff;
-    int32_t freq;
-    asm volatile("MRS %0, cntvct_el0 " : "=r" (temp_disp1));
-    asm volatile("MRS %0, cntvct_el0 " : "=r" (temp_disp2));
-    asm volatile("MRS %0, cntfrq_el0 " : "=r" (freq));
+    uint64_t temp_disp1,temp_disp2,diff;
+    uint64_t freq;
 
-    diff = temp_disp2 - temp_disp1;
-    const std::string temp_disp_string = std::to_string(diff);
-    const std::string show1 = std::to_string(temp_disp1);
-    const std::string show2 = std::to_string(temp_disp2);
-    const std::string show_freq = std::to_string(freq);
-    int64_t result_pmccntr2 = arm_v8_get_timing();
-
-    const std::string show_result_pmccntr = std::to_string(result_pmccntr2 - result_pmccntr);
 
 
     // cache flushing
@@ -103,6 +87,17 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
 //    temp = array[1*8192];
 //    asm volatile("MRS %0, cntvct_el0 " : "=r" (slow_diff2));
 //    const std::string slow_diff = std::to_string(slow_diff2 - slow_diff1);
+#if defined(pmccntr)
+    arm_v8_timing_init();
+    uint64_t result_pmccntr = arm_v8_get_timing();
+    asm volatile ("isb"); // Serialize after reading the counter
+#endif
+#if defined(cntvct_el0)
+    asm volatile("MRS %0, cntfrq_el0 " : "=r" (freq));
+    asm volatile("MRS %0, cntvct_el0 " : "=r" (temp_disp1));
+    asm volatile ("isb"); // Serialize after reading the counter
+#endif
+
 
     uint8_t array[10 * 8192];
     volatile uint8_t *volatile_array = array; // Declare a volatile pointer to the array
@@ -150,6 +145,26 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
     asm volatile ("isb");
     const std::string slow_diff = std::to_string(slow_diff2 - slow_diff1);
 
+#if defined(pmccntr)
+    uint64_t result_pmccntr2 = arm_v8_get_timing();
+    asm volatile ("isb"); // Serialize after reading the counter
+    const std::string show_result_pmccntr = std::to_string(result_pmccntr2 - result_pmccntr);
+    const std::string temp_disp_string = "no temp_disp_string";
+    const std::string show1 = "no show1";
+    const std::string show2 = "no show2";
+    const std::string show_freq = "no show_freq";
+
+#endif
+#if defined(cntvct_el0)
+    asm volatile("MRS %0, cntvct_el0 " : "=r" (temp_disp2));
+    asm volatile ("isb"); // Serialize after reading the counter
+    diff = temp_disp2 - temp_disp1;
+    const std::string temp_disp_string = std::to_string(diff);
+    const std::string show1 = std::to_string(temp_disp1);
+    const std::string show2 = std::to_string(temp_disp2);
+    const std::string show_freq = std::to_string(freq);
+    const std::string show_result_pmccntr = "no result_pmccntr";
+#endif
 
 
 
@@ -158,11 +173,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
 
 
 
-
-
-
-
-    const std::string msg = c_msg + java_msg  +
+    std::string msg = c_msg + java_msg  +
                             "\ndiff value:"+ temp_disp_string +
                             "\none:" + show1 +
                             "\ntwo:" + show2 +
@@ -170,8 +181,5 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
                             "\nresult_pmccntr:" + show_result_pmccntr +
                             "\nslow:" + slow_diff +
                             "\nfast:" + fast_diff ;
-
-
-
     return env->NewStringUTF(msg.c_str());
 }
