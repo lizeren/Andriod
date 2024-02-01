@@ -99,23 +99,16 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
 #endif
 
 
-    uint8_t array[10 * 8192];
+    uint8_t array[256 * 8192];
     volatile uint8_t *volatile_array = array; // Declare a volatile pointer to the array
     int temp, temp2, i;
     int64_t fast_diff1, fast_diff2;
     int64_t slow_diff1, slow_diff2;
 
 // Initialize the array
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 256; i++) {
         volatile_array[i * 8192] = 1;
         asm volatile ("dsb ish"); // Data synchronization barrier ensure write has completed
-    }
-
-// FLUSH the array from the CPU cache
-    for (i = 0; i < 10; i++) {
-        asm volatile ("dc civac, %0" : : "r" (&volatile_array[i * 8192]) : "memory");
-        //asm volatile ("dsb ish"); // Data synchronization barrier ensure invalidation has completed
-        asm volatile ("isb"); // Insert isb for serialization after cache flush
     }
 
 // Access some of the array items
@@ -134,6 +127,14 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
     const std::string fast_diff = std::to_string(fast_diff2 - fast_diff1);
 
 
+    // FLUSH the array from the CPU cache
+    for (i = 0; i < 256; i++) {
+        asm volatile ("dc civac, %0" : : "r" (&volatile_array[i * 8192]) : "memory");
+        //asm volatile ("dsb ish"); // Data synchronization barrier ensure invalidation has completed
+        asm volatile ("isb"); // Insert isb for serialization after cache flush
+    }
+
+
 // Similar pattern for the second measurement
     asm volatile ("isb");
     asm volatile ("MRS %0, cntvct_el0" : "=r" (slow_diff1));
@@ -144,6 +145,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_tempc_MainActivity_process
     asm volatile ("MRS %0, cntvct_el0" : "=r" (slow_diff2));
     asm volatile ("isb");
     const std::string slow_diff = std::to_string(slow_diff2 - slow_diff1);
+
+    const std::string unoptmized = std::to_string(temp - temp2);
 
 #if defined(pmccntr)
     uint64_t result_pmccntr2 = arm_v8_get_timing();
